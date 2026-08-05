@@ -1,0 +1,51 @@
+name: adventure_works_analytics
+version: '1.0.0'
+config-version: 2
+
+profile: adventure_works_analytics
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: target
+clean-targets:
+  - target
+  - dbt_packages
+
+vars:
+  raw_schema: adventure_works
+  gross_sales_2011_expected: 12646112.16
+  reconciliation_tolerance: 0.01
+
+models:
+  adventure_works_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
+    staging:
+      +materialized: view
+      +tags: [staging]
+    intermediate:
+      +materialized: ephemeral
+      +tags: [intermediate]
+    marts:
+      +materialized: table
+      +tags: [marts]
+      dimensions:
+        +tags: [dimension]
+      facts:
+        +tags: [fact]
+      bridges:
+        +tags: [bridge]
+
+seeds:
+  adventure_works_analytics:
+    +quote_columns: false
+    +column_types:
+      status_key: bigint
+      status_code: int
+      status_name: string

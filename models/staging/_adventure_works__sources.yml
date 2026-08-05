@@ -1,0 +1,312 @@
+version: 2
+
+sources:
+  - name: adventure_works
+    description: Tabelas transacionais do Adventure Works disponibilizadas no schema raw do desafio.
+    schema: "{{ var('raw_schema', 'adventure_works') }}"
+    quoting:
+      database: false
+      schema: false
+      identifier: false
+    tables:
+      - name: sales_order_header
+        identifier: SalesOrderHeader
+        description: Cabeçalho dos pedidos de venda.
+        columns:
+          - name: SalesOrderID
+            description: Chave primária do pedido.
+            data_tests: [unique, not_null]
+          - name: OrderDate
+            description: Data de criação do pedido.
+            data_tests: [not_null]
+          - name: DueDate
+            description: Data prevista de atendimento.
+            data_tests: [not_null]
+          - name: Status
+            description: Código de status do pedido.
+            data_tests:
+              - not_null
+              - accepted_values:
+                  arguments:
+                    values: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+          - name: CustomerID
+            description: Cliente associado ao pedido.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'customer')
+                    field: CustomerID
+          - name: ShipToAddressID
+            description: Endereço de entrega.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'address')
+                    field: AddressID
+          - name: CreditCardID
+            description: Cartão utilizado, quando aplicável.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'credit_card')
+                    field: CreditCardID
+          - name: SubTotal
+            description: Receita líquida de produtos no grão do pedido.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+          - name: TaxAmt
+            description: Tributos do pedido.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+          - name: Freight
+            description: Frete do pedido.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+          - name: TotalDue
+            description: Valor total do pedido incluindo subtotal, tributos e frete.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+
+      - name: sales_order_detail
+        identifier: SalesOrderDetail
+        description: Itens de produto associados aos pedidos.
+        columns:
+          - name: SalesOrderDetailID
+            description: Chave primária do item.
+            data_tests: [unique, not_null]
+          - name: SalesOrderID
+            description: Pedido ao qual o item pertence.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'sales_order_header')
+                    field: SalesOrderID
+          - name: ProductID
+            description: Produto vendido.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'product')
+                    field: ProductID
+          - name: OrderQty
+            description: Quantidade vendida.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 1
+          - name: UnitPrice
+            description: Preço unitário aplicado.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+          - name: UnitPriceDiscount
+            description: Percentual de desconto do item.
+            data_tests:
+              - not_null
+              - accepted_range:
+                  arguments:
+                    min_value: 0
+                    max_value: 1
+
+      - name: customer
+        identifier: Customer
+        description: Cadastro de clientes pessoa física e lojas.
+        columns:
+          - name: CustomerID
+            description: Chave primária do cliente.
+            data_tests: [unique, not_null]
+          - name: PersonID
+            description: Pessoa associada ao cliente individual ou contato.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'person')
+                    field: BusinessEntityID
+          - name: StoreID
+            description: Loja associada ao cliente B2B.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'store')
+                    field: BusinessEntityID
+
+      - name: credit_card
+        identifier: CreditCard
+        description: Cadastro de cartões. A camada analítica expõe somente o tipo.
+        columns:
+          - name: CreditCardID
+            description: Chave primária do cartão.
+            data_tests: [unique, not_null]
+          - name: CardType
+            description: Tipo do cartão.
+            data_tests: [not_null]
+
+      - name: sales_order_header_sales_reason
+        identifier: SalesOrderHeaderSalesReason
+        description: Associação muitos-para-muitos entre pedidos e motivos de venda.
+        columns:
+          - name: SalesOrderID
+            description: Pedido associado.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'sales_order_header')
+                    field: SalesOrderID
+          - name: SalesReasonID
+            description: Motivo associado.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'sales_reason')
+                    field: SalesReasonID
+
+      - name: sales_reason
+        identifier: SalesReason
+        description: Domínio de motivos de venda.
+        columns:
+          - name: SalesReasonID
+            description: Chave primária do motivo.
+            data_tests: [unique, not_null]
+          - name: Name
+            description: Nome do motivo.
+            data_tests: [not_null]
+          - name: ReasonType
+            description: Agrupamento do motivo.
+            data_tests: [not_null]
+
+      - name: store
+        identifier: Store
+        description: Cadastro de clientes corporativos.
+        columns:
+          - name: BusinessEntityID
+            description: Chave primária da loja.
+            data_tests: [unique, not_null]
+          - name: Name
+            description: Nome comercial da loja.
+            data_tests: [not_null]
+
+      - name: product
+        identifier: Product
+        description: Cadastro de produtos.
+        columns:
+          - name: ProductID
+            description: Chave primária do produto.
+            data_tests: [unique, not_null]
+          - name: Name
+            description: Nome do produto.
+            data_tests: [not_null]
+          - name: ProductSubcategoryID
+            description: Subcategoria do produto.
+            data_tests:
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'product_subcategory')
+                    field: ProductSubcategoryID
+
+      - name: product_subcategory
+        identifier: ProductSubcategory
+        description: Subcategorias de produto.
+        columns:
+          - name: ProductSubcategoryID
+            description: Chave primária da subcategoria.
+            data_tests: [unique, not_null]
+          - name: ProductCategoryID
+            description: Categoria pai.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'product_category')
+                    field: ProductCategoryID
+
+      - name: product_category
+        identifier: ProductCategory
+        description: Categorias de produto.
+        columns:
+          - name: ProductCategoryID
+            description: Chave primária da categoria.
+            data_tests: [unique, not_null]
+          - name: Name
+            description: Nome da categoria.
+            data_tests: [not_null]
+
+      - name: person
+        identifier: Person
+        description: Cadastro de pessoas.
+        columns:
+          - name: BusinessEntityID
+            description: Chave primária da pessoa.
+            data_tests: [unique, not_null]
+          - name: FirstName
+            description: Primeiro nome.
+            data_tests: [not_null]
+          - name: LastName
+            description: Sobrenome.
+            data_tests: [not_null]
+
+      - name: address
+        identifier: Address
+        description: Cadastro de endereços.
+        columns:
+          - name: AddressID
+            description: Chave primária do endereço.
+            data_tests: [unique, not_null]
+          - name: City
+            description: Cidade.
+            data_tests: [not_null]
+          - name: StateProvinceID
+            description: Estado ou província.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'state_province')
+                    field: StateProvinceID
+
+      - name: state_province
+        identifier: StateProvince
+        description: Estados e províncias.
+        columns:
+          - name: StateProvinceID
+            description: Chave primária do estado ou província.
+            data_tests: [unique, not_null]
+          - name: CountryRegionCode
+            description: Código do país.
+            data_tests:
+              - not_null
+              - relationships:
+                  arguments:
+                    to: source('adventure_works', 'country_region')
+                    field: CountryRegionCode
+
+      - name: country_region
+        identifier: CountryRegion
+        description: Países e regiões.
+        columns:
+          - name: CountryRegionCode
+            description: Chave primária do país.
+            data_tests: [unique, not_null]
+          - name: Name
+            description: Nome do país.
+            data_tests: [not_null]

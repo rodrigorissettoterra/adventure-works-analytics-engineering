@@ -1,0 +1,20 @@
+version: 2
+
+seeds:
+  - name: order_status
+    description: Mapeamento controlado dos códigos de status dos pedidos.
+    columns:
+      - name: status_key
+        description: Chave da dimensão de status.
+        data_tests:
+          - unique
+          - not_null
+      - name: status_code
+        description: Código registrado na origem.
+        data_tests:
+          - unique
+          - not_null
+      - name: status_name
+        description: Descrição legível do status.
+        data_tests:
+          - not_null

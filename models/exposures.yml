@@ -1,0 +1,22 @@
+version: 2
+
+exposures:
+  - name: adventure_works_commercial_dashboard
+    label: Adventure Works — Commercial Analytics
+    type: dashboard
+    maturity: medium
+    description: Dashboard comercial responsável por responder às perguntas mínimas do desafio.
+    depends_on:
+      - ref('fct_sales')
+      - ref('fct_sales_orders')
+      - ref('dim_date')
+      - ref('dim_customer')
+      - ref('dim_product')
+      - ref('dim_location')
+      - ref('dim_credit_card')
+      - ref('dim_order_status')
+      - ref('dim_sales_reason')
+      - ref('bridge_order_sales_reason')
+    owner:
+      name: Analytics Engineering
+      email: analytics-engineering@example.com

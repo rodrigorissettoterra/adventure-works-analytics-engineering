@@ -1,0 +1,129 @@
+version: 2
+
+models:
+  - name: stg_sales__sales_order_header
+    description: Cabeçalhos de pedido padronizados, com atributos sensíveis removidos.
+    columns:
+      - name: sales_order_id
+        description: Chave natural do pedido.
+        data_tests: [unique, not_null]
+      - name: order_date
+        description: Timestamp de criação do pedido.
+        data_tests: [not_null]
+      - name: customer_id
+        description: Cliente do pedido.
+        data_tests: [not_null]
+      - name: transaction_total
+        description: Valor total no grão do pedido.
+        data_tests: [not_null]
+
+  - name: stg_sales__sales_order_detail
+    description: Itens de pedido padronizados.
+    columns:
+      - name: sales_order_detail_id
+        description: Chave natural do item.
+        data_tests: [unique, not_null]
+      - name: sales_order_id
+        description: Pedido do item.
+        data_tests: [not_null]
+      - name: order_quantity
+        description: Quantidade vendida.
+        data_tests:
+          - not_null
+          - accepted_range:
+              arguments:
+                min_value: 1
+      - name: unit_price_discount_pct
+        description: Percentual de desconto do item.
+        data_tests:
+          - accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 1
+
+  - name: stg_sales__customer
+    description: Clientes padronizados.
+    columns:
+      - name: customer_id
+        description: Chave natural do cliente.
+        data_tests: [unique, not_null]
+
+  - name: stg_sales__credit_card
+    description: Cartões minimizados para fins analíticos.
+    columns:
+      - name: credit_card_id
+        description: Chave natural do cartão.
+        data_tests: [unique, not_null]
+
+  - name: stg_sales__sales_order_header_sales_reason
+    description: Relação entre pedidos e motivos de venda.
+    columns:
+      - name: sales_order_id
+        description: Pedido associado.
+        data_tests: [not_null]
+      - name: sales_reason_id
+        description: Motivo associado.
+        data_tests: [not_null]
+
+  - name: stg_sales__sales_reason
+    description: Motivos de venda padronizados.
+    columns:
+      - name: sales_reason_id
+        description: Chave natural do motivo.
+        data_tests: [unique, not_null]
+
+  - name: stg_sales__store
+    description: Lojas padronizadas.
+    columns:
+      - name: store_id
+        description: Chave natural da loja.
+        data_tests: [unique, not_null]
+
+  - name: stg_production__product
+    description: Produtos padronizados.
+    columns:
+      - name: product_id
+        description: Chave natural do produto.
+        data_tests: [unique, not_null]
+
+  - name: stg_production__product_subcategory
+    description: Subcategorias de produto padronizadas.
+    columns:
+      - name: product_subcategory_id
+        description: Chave natural da subcategoria.
+        data_tests: [unique, not_null]
+
+  - name: stg_production__product_category
+    description: Categorias de produto padronizadas.
+    columns:
+      - name: product_category_id
+        description: Chave natural da categoria.
+        data_tests: [unique, not_null]
+
+  - name: stg_person__person
+    description: Pessoas padronizadas sem XMLs de contato e demografia.
+    columns:
+      - name: person_id
+        description: Chave natural da pessoa.
+        data_tests: [unique, not_null]
+
+  - name: stg_person__address
+    description: Endereços minimizados para análise geográfica.
+    columns:
+      - name: address_id
+        description: Chave natural do endereço.
+        data_tests: [unique, not_null]
+
+  - name: stg_person__state_province
+    description: Estados e províncias padronizados.
+    columns:
+      - name: state_province_id
+        description: Chave natural do estado ou província.
+        data_tests: [unique, not_null]
+
+  - name: stg_person__country_region
+    description: Países padronizados.
+    columns:
+      - name: country_region_code
+        description: Código natural do país.
+        data_tests: [unique, not_null]

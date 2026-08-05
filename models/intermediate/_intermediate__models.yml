@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: int_sales__customers
+    description: Resolução da entidade cliente entre pessoas e lojas.
+    columns:
+      - name: customer_id
+        description: Chave natural do cliente.
+        data_tests: [unique, not_null]
+      - name: customer_name
+        description: Nome da loja para B2B ou nome da pessoa para B2C.
+        data_tests: [not_null]
+      - name: customer_type
+        description: Classificação Store ou Individual.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Store', 'Individual']
+
+  - name: int_production__products
+    description: Produto enriquecido com categoria e subcategoria.
+    columns:
+      - name: product_id
+        description: Chave natural do produto.
+        data_tests: [unique, not_null]
+
+  - name: int_person__locations
+    description: Endereço enriquecido com hierarquia geográfica.
+    columns:
+      - name: address_id
+        description: Chave natural da localização.
+        data_tests: [unique, not_null]
+
+  - name: int_sales__orders_enriched
+    description: Pedido enriquecido com cliente, geografia, canal e cartão.
+    columns:
+      - name: sales_order_id
+        description: Chave natural do pedido.
+        data_tests: [unique, not_null]
+      - name: sales_channel
+        description: Canal Online ou Reseller.
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['Online', 'Reseller']
