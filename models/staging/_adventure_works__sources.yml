@@ -58,28 +58,28 @@ sources:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
+                    min_value: 0.0
           - name: TaxAmt
             description: Tributos do pedido.
             data_tests:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
+                    min_value: 0.0
           - name: Freight
             description: Frete do pedido.
             data_tests:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
+                    min_value: 0.0
           - name: TotalDue
             description: Valor total do pedido incluindo subtotal, tributos e frete.
             data_tests:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
+                    min_value: 0.0
 
       - name: sales_order_detail
         identifier: SalesOrderDetail
@@ -110,22 +110,22 @@ sources:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 1
+                    min_value: 1.0
           - name: UnitPrice
             description: Preço unitário aplicado.
             data_tests:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
+                    min_value: 0.0
           - name: UnitPriceDiscount
             description: Percentual de desconto do item.
             data_tests:
               - not_null
               - accepted_range:
                   arguments:
-                    min_value: 0
-                    max_value: 1
+                    min_value: 0.0
+                    max_value: 1.0
 
       - name: customer
         identifier: Customer
