@@ -9,4 +9,4 @@ select
 from {{ ref('fct_sales') }} as sales
 left join {{ ref('dim_date') }} as calendar on sales.order_date_key = calendar.date_key
 group by all
-order by calendar.year, date.month_number
+order by calendar.year, calendar.month_number
