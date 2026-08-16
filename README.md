@@ -1,54 +1,265 @@
-# Adventure Works Analytics
+# Adventure Works Analytics Engineering
 
-Projeto dbt para estruturar o domínio comercial da Adventure Works em uma camada dimensional confiável, auditável e orientada a consumo analítico.
+> **A dbt project that transforms raw operational data into a tested, documented, and governed dimensional model for analytical consumption.**
 
-## Arquitetura
+This project models the commercial domain of **Adventure Works** using modern Analytics Engineering practices.
+
+The objective is not simply to write SQL transformations, but to create a reliable analytical layer where **data grain, business metrics, quality rules, lineage, and downstream consumption are explicitly defined**.
+
+<p>
+  <img src="https://img.shields.io/badge/dbt-Analytics%20Engineering-FF694B?logo=dbt&logoColor=white" alt="dbt">
+  <img src="https://img.shields.io/badge/Databricks-Data%20Platform-FF3621?logo=databricks&logoColor=white" alt="Databricks">
+  <img src="https://img.shields.io/badge/SQL-Data%20Modeling-blue" alt="SQL">
+  <img src="https://img.shields.io/badge/Data%20Quality-Tests-green" alt="Data Quality">
+</p>
+
+---
+
+## The problem
+
+Operational databases are optimized for transactions. Analytics requires a different structure.
+
+Business users need consistent answers to questions such as:
+
+- How much did we sell?
+- Which products generate the most value?
+- Who are the highest-value customers?
+- Which locations perform best?
+- How does revenue evolve over time?
+- Which promotions and sales reasons are associated with performance?
+
+Answering these questions directly from normalized operational tables often creates duplicated transformation logic, inconsistent metrics, ambiguous joins, and grain errors.
+
+This project creates a reusable analytical layer to solve those problems.
+
+---
+
+## Architecture
 
 ```text
-raw adventure_works
-        |
-        v
-staging: padronização, tipagem e minimização de dados
-        |
-        v
-intermediate: resolução de entidades e joins reutilizáveis
-        |
-        v
-marts: dimensões, fatos e ponte de motivos de venda
-        |
-        v
-Power BI / Databricks AI/BI
+Raw Adventure Works
+        ↓
+Staging
+standardization · typing · minimization
+        ↓
+Intermediate
+entity resolution · reusable joins · business preparation
+        ↓
+Marts
+dimensions · facts · bridges
+        ↓
+Governed Metrics
+        ↓
+Power BI / Databricks AI/BI / Analytical Queries
 ```
 
-## Grãos
+The separation of layers keeps transformation responsibilities explicit and reduces duplicated logic.
 
-| Modelo | Grão |
+---
+
+## What this project demonstrates
+
+- dimensional modeling with facts, dimensions, and bridges;
+- explicit grain definition;
+- layered dbt architecture;
+- reusable intermediate models;
+- metric contracts;
+- source and model testing;
+- custom generic tests;
+- financial reconciliation;
+- data minimization;
+- analytical business queries;
+- documentation and runbooks;
+- preparation for BI consumption.
+
+---
+
+## Dimensional model
+
+The marts are built around clearly defined grains.
+
+| Model | Grain |
 |---|---|
-| `fct_sales` | Uma linha por item do pedido (`sales_order_detail_id`) |
-| `fct_sales_orders` | Uma linha por pedido (`sales_order_id`) |
-| `bridge_order_sales_reason` | Uma linha por combinação pedido + motivo |
-| `dim_customer` | Uma linha por cliente |
-| `dim_product` | Uma linha por produto |
-| `dim_location` | Uma linha por endereço de entrega |
-| `dim_date` | Uma linha por data |
+| `fct_sales` | One row per sales order item (`sales_order_detail_id`) |
+| `fct_sales_orders` | One row per sales order (`sales_order_id`) |
+| `bridge_order_sales_reason` | One row per order + sales reason combination |
+| `dim_customer` | One row per customer |
+| `dim_product` | One row per product |
+| `dim_location` | One row per delivery location |
+| `dim_date` | One row per date |
 
-## Contrato de métricas
+Additional dimensions are included where required by the domain.
 
-- **Receita bruta:** quantidade × preço unitário.
-- **Desconto:** receita bruta × percentual de desconto.
-- **Valor transacionado / receita líquida de produto:** receita bruta − desconto.
-- **Valor total do pedido:** `subtotal + tax + freight`, disponível somente em `fct_sales_orders`.
-- **Ticket médio:** receita líquida de produto ÷ pedidos distintos.
+Explicit grain definition matters because many analytical errors happen when metrics from different levels are combined without a formal allocation rule.
 
-A métrica principal de valor transacionado utiliza a receita líquida de produto porque precisa permanecer aditiva por produto, cliente, geografia e período. `total_due` é uma métrica no grão do pedido e não deve ser distribuída entre itens sem regra formal de alocação.
+---
 
-## Execução no dbt Cloud
+## Metric contract
 
-1. Conecte o projeto ao repositório GitHub.
-2. Configure a conexão Databricks.
-3. Defina o schema de desenvolvimento no ambiente.
-4. Confirme que a variável `raw_schema` aponta para `adventure_works`.
-5. Execute:
+Business metrics are defined independently from individual dashboards.
+
+### Gross Sales
+
+```text
+Gross Sales = Order Quantity × Unit Price
+```
+
+### Discount
+
+```text
+Discount = Gross Sales × Unit Price Discount
+```
+
+### Product Net Revenue
+
+```text
+Product Net Revenue = Gross Sales - Discount
+```
+
+### Order Total
+
+At order grain:
+
+```text
+Order Total = Subtotal + Tax + Freight
+```
+
+### Average Order Value
+
+```text
+Average Order Value = Product Net Revenue / Distinct Orders
+```
+
+### Why Product Net Revenue is the primary additive sales metric
+
+`total_due` exists at **order grain**, while product analytics requires a metric that remains additive across products, customers, geography, dates, and other item-level dimensions.
+
+For that reason, Product Net Revenue is calculated from line-level information. `total_due` is intentionally **not distributed across products** without a formally defined allocation rule.
+
+This prevents double counting and preserves metric semantics.
+
+See [`docs/metric_contract_v2.md`](docs/metric_contract_v2.md) for the formal contract.
+
+---
+
+## Engineering layers
+
+### Staging
+
+The staging layer is responsible for:
+
+- source standardization;
+- column naming;
+- data typing;
+- field selection;
+- minimization of unnecessary attributes;
+- source-level quality assumptions.
+
+### Intermediate
+
+The intermediate layer centralizes reusable business logic, including entity resolution and joins that would otherwise be repeated across marts.
+
+Examples include customer, product, location, and enriched-order preparation.
+
+### Marts
+
+The marts expose stable analytical entities using facts, dimensions, and bridges designed for downstream consumption.
+
+---
+
+## Business questions
+
+The repository includes analytical SQL queries for questions such as:
+
+- sales across business dimensions;
+- products with the highest average order value;
+- top customers;
+- top cities;
+- monthly sales evolution;
+- promotion and product performance.
+
+These queries live under [`analyses/business_questions`](analyses/business_questions) and consume the governed analytical layer rather than rebuilding transformations from raw sources.
+
+---
+
+## Data quality and testing
+
+The project uses dbt tests to validate both source assumptions and analytical contracts.
+
+Typical execution:
+
+```bash
+dbt test --select source:*
+dbt test
+```
+
+The repository also includes a custom `accepted_range` generic test and additional assertions for business-critical values.
+
+### Financial reconciliation
+
+The test `assert_gross_sales_2011` validates that gross sales for 2011, rounded to two decimal places, equal:
+
+```text
+$12,646,112.16
+```
+
+This creates a concrete reconciliation point between the analytical model and the reference audit value.
+
+---
+
+## Security and data minimization
+
+The analytical mart intentionally avoids exposing data that are not necessary for business analysis.
+
+Examples of excluded attributes include:
+
+- credit-card numbers;
+- approval codes;
+- demographic XML payloads;
+- other operational fields without analytical need.
+
+Only the card type is exposed where relevant to analysis.
+
+The objective is to keep the analytical layer useful while minimizing unnecessary sensitive information.
+
+---
+
+## Project structure
+
+```text
+.
+├── analyses/
+│   └── business_questions/
+├── docs/
+│   ├── architecture.md
+│   ├── metric_contract_v2.md
+│   ├── runbook.md
+│   └── test_evidence_template.md
+├── macros/
+│   ├── safe_divide.sql
+│   └── tests/
+├── models/
+│   ├── staging/
+│   ├── intermediate/
+│   ├── marts/
+│   └── exposures.yml
+├── seeds/
+├── tests/
+├── dbt_project.yml
+├── packages.yml
+├── profiles.yml.example
+└── README.md
+```
+
+---
+
+## Running the project
+
+The project is designed to run with dbt and Databricks.
+
+Configure the connection and ensure the `raw_schema` variable points to the Adventure Works source schema.
+
+Then run:
 
 ```bash
 dbt debug
@@ -59,28 +270,56 @@ dbt test
 dbt docs generate
 ```
 
-Para uma execução integrada, utilize:
+For an integrated build:
 
 ```bash
 dbt build
 ```
 
-## Reconciliação financeira
+Operational details are documented in [`docs/runbook.md`](docs/runbook.md).
 
-O teste `assert_gross_sales_2011` valida que a receita bruta de 2011, arredondada a duas casas decimais, corresponde a **$ 12,646,112.16**, valor de referência informado pela auditoria.
+---
 
-## Segurança
+## Documentation
 
-O mart não expõe número do cartão, código de aprovação, XMLs demográficos ou outros atributos sem necessidade analítica. Apenas o tipo de cartão é disponibilizado.
+The repository separates implementation from supporting documentation:
 
-## Evidências para o vídeo
+- [`docs/architecture.md`](docs/architecture.md) — architectural decisions and model flow;
+- [`docs/metric_contract_v2.md`](docs/metric_contract_v2.md) — metric definitions and semantics;
+- [`docs/runbook.md`](docs/runbook.md) — execution guidance;
+- [`docs/test_evidence_template.md`](docs/test_evidence_template.md) — evidence checklist for validation.
 
-Execute e registre:
+---
 
-```bash
-dbt run
-dbt test --select source:*
-dbt test
-```
+## Key engineering principles
 
-O arquivo `docs/test_evidence_template.md` contém o checklist de evidências.
+### Grain before metrics
+
+Every fact is defined at an explicit grain before business metrics are calculated.
+
+### Metrics before dashboards
+
+Metric semantics live in the analytical layer rather than being recreated independently in visualization tools.
+
+### Reuse before duplication
+
+Shared joins and entity-resolution logic belong in intermediate models.
+
+### Tests as contracts
+
+Tests validate not only technical integrity but also important business expectations.
+
+### Minimize unnecessary data
+
+Analytical usability does not require exposing every attribute available in the operational source.
+
+---
+
+## Author
+
+**Rodrigo Terra**
+
+Data & AI professional focused on Analytics Engineering, Data Science, Artificial Intelligence, data platforms, and reliable decision-support systems.
+
+- GitHub: [Rodrigo Terra](https://github.com/rodrigorissettoterra)
+- LinkedIn: [Rodrigo Terra](https://www.linkedin.com/in/rodrigo-rissetto-terra/)
